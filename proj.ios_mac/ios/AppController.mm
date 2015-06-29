@@ -27,7 +27,7 @@
 #import "cocos2d.h"
 #import "AppDelegate.h"
 #import "RootViewController.h"
-#include "UMShare.h"
+#include "UMService.h"
 
 @implementation AppController
 
@@ -39,15 +39,16 @@ static AppDelegate s_sharedApplication;
 
 - (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url
 {
-    UMShare::passUrl(url.absoluteString.UTF8String);
+    UMService::passUrl(url.absoluteString.UTF8String);
     return true;
 }
+
 - (BOOL)application:(UIApplication *)application
             openURL:(NSURL *)url
   sourceApplication:(NSString *)sourceApplication
          annotation:(id)annotation
 {
-    UMShare::passUrl(url.absoluteString.UTF8String);
+    UMService::passUrl(url.absoluteString.UTF8String);
     return true;
 }
 

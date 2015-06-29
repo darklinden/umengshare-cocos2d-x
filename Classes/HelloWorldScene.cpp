@@ -1,5 +1,5 @@
 #include "HelloWorldScene.h"
-#include "UMShare.h"
+#include "UMService.h"
 USING_NS_CC;
 
 Scene* HelloWorld::createScene()
@@ -72,7 +72,7 @@ bool HelloWorld::init()
     // add the sprite as a child to this layer
     this->addChild(sprite, 0);
     
-    UMShare::setShareCallback([=](UMShare::SHARE_TYPE type, int errCode) {
+    UMService::setShareCallback([=](UMService::SHARE_TYPE type, int errCode) {
         MessageBox(StringUtils::format("SHARE_TYPE %d errCode %d", type, errCode).c_str(), "!");
     });
     
@@ -95,5 +95,5 @@ void HelloWorld::menuCloseCallback(Ref* pSender)
     
     auto path = FileUtils::getInstance()->fullPathForFilename("HelloWorld.png");
     
-    UMShare::share(UMShare::SHARE_TYPE::WECHAT, "Share Title", "Share Text", "http://www.baidu.com", path);// "https://www.baidu.com/img/baidu_jgylogo3.gif");//
+    UMService::share(UMService::SHARE_TYPE::WECHAT, "Share Title", "Share Text", "http://www.baidu.com", path);// "https://www.baidu.com/img/baidu_jgylogo3.gif");//
 }

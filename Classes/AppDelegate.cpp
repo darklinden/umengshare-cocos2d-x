@@ -1,6 +1,6 @@
 #include "AppDelegate.h"
 #include "HelloWorldScene.h"
-#include "UMShare.h"
+#include "UMService.h"
 
 USING_NS_CC;
 
@@ -41,7 +41,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     // create a scene. it's an autorelease object
     auto scene = HelloWorld::createScene();
     
-    UMShare::getInstance();
+    UMService::getInstance()->sdkinit();
 
     // run
     director->runWithScene(scene);
