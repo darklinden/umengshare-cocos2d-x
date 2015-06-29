@@ -1,0 +1,12 @@
+umsdk_IOS_analytics_idfa_v3.5.8
+
+umsdk_Android_analytics_v5.5.3
+
+umeng_message_2015_05_05_v2.2.0(arm&no-utdid)
+
+UMessage_Sdk_All_1.1.0
+
+umeng_ios_social_sdk_4.2.3_arm64_custom
+
+umeng_android_social_sdk_4.2.4_custom
+

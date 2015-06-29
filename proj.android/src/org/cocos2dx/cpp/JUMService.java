@@ -27,10 +27,15 @@ import com.umeng.socialize.weixin.controller.UMWXHandler;
 import com.umeng.socialize.weixin.media.CircleShareContent;
 import com.umeng.socialize.weixin.media.WeiXinShareContent;
 
-public class JUMShare {
+public class JUMService {
 
 	private static Activity _act = null;
 	private static UMSocialService _mController = null;
+	
+	private static String _wxKey = "";
+	private static String _wxSec = "";
+	private static String _qqKey = "";
+	private static String _qqSec = "";
 
 	public static void onActivityResult(int requestCode, int resultCode,
 			Intent data) {
@@ -41,42 +46,22 @@ public class JUMShare {
 			ssoHandler.authorizeCallBack(requestCode, resultCode, data);
 		}
 	}
+	
+	public static void setupWechat(String key, String sec)
+	{
+		_wxKey = key;
+		_wxSec = sec;
+	}
+	
+	public static void setupQQ(String key, String sec)
+	{
+		_qqKey = key;
+		_qqSec = sec;
+	}
 
 	public static void sdkInit(Activity act) {
 		_act = act;
 		_mController = UMServiceFactory.getUMSocialService("com.umeng.share");
-
-		// 支持微信朋友圈
-		{
-			String appId = "wx63ca453f3901ea53";
-			String appSecret = "fd02e4eeee50dfeff8b4e554b7faa00d";
-			// 添加微信平台
-			UMWXHandler wxHandler = new UMWXHandler(_act, appId, appSecret);
-			wxHandler.addToSocialSDK();
-
-			// 支持微信朋友圈
-			UMWXHandler wxCircleHandler = new UMWXHandler(_act, appId,
-					appSecret);
-			wxCircleHandler.setToCircle(true);
-			wxCircleHandler.addToSocialSDK();
-		}
-
-		// QQ
-		{
-			String appId = "100424468";
-			String appKey = "c7394704798a158208a74ab60104f0ba";
-			// 添加QQ支持, 并且设置QQ分享内容的target url
-			UMQQSsoHandler qqSsoHandler = new UMQQSsoHandler(_act, appId,
-					appKey);
-			qqSsoHandler.setTargetUrl("http://www.umeng.com/social");
-			qqSsoHandler.addToSocialSDK();
-
-			// 添加QZone平台
-			QZoneSsoHandler qZoneSsoHandler = new QZoneSsoHandler(_act, appId,
-					appKey);
-			qZoneSsoHandler.addToSocialSDK();
-		}
-
 		_mController.getConfig().setSsoHandler(new SinaSsoHandler());
 	}
 
@@ -107,6 +92,11 @@ public class JUMShare {
 		_act.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
+				
+				if (!(_wxKey.length() > 0 && _wxSec.length() > 0 && _qqKey.length() > 0 && _qqSec.length() > 0)) {
+					Toast.makeText(_act, "请先配置微信和qq！", Toast.LENGTH_LONG).show();
+					return;
+				}
 
 				setShareContent(platform, title, text, url, image);
 
@@ -177,49 +167,66 @@ public class JUMShare {
 		else if (image.contains("http")) {
 			imageObj = new UMImage(_act, image);
 		}
-		 
-
-		// 设置QQ空间分享内容
-		QZoneShareContent qzone = new QZoneShareContent();
-		qzone.setShareContent(text);
-		qzone.setTargetUrl(url);
-		qzone.setTitle(title);
-		qzone.setShareImage(imageObj);
-		// qzone.setShareMedia(uMusic);
-		_mController.setShareMedia(qzone);
-
-		// qq 分享
-		QQShareContent qqShareContent = new QQShareContent();
-		qqShareContent.setShareContent(text);
-		qqShareContent.setTitle(title);
-		qqShareContent.setShareImage(imageObj);
-		qqShareContent.setTargetUrl(url);
-		_mController.setShareMedia(qqShareContent);
-
-		// wechat
-		WeiXinShareContent weixinContent = new WeiXinShareContent();
-		weixinContent.setShareContent(text);
-		weixinContent.setTitle(title);
-		weixinContent.setTargetUrl(url);
-		weixinContent.setShareImage(imageObj);
-		_mController.setShareMedia(weixinContent);
-
-		// 设置朋友圈分享的内容
-		CircleShareContent circleMedia = new CircleShareContent();
-		circleMedia.setShareContent(text);
-		circleMedia.setTitle(title);
-		circleMedia.setShareImage(imageObj);
-		// circleMedia.setShareMedia(uMusic);
-		// circleMedia.setShareMedia(video);
-		circleMedia.setTargetUrl(url);
-		_mController.setShareMedia(circleMedia);
-
-		// sina
-		SinaShareContent sinaContent = new SinaShareContent();
-		sinaContent.setShareContent(text);
-		sinaContent.setShareImage(imageObj);
-		sinaContent.setTitle(title);
-		sinaContent.setTargetUrl(url);
-		_mController.setShareMedia(sinaContent);
+				
+		if (SHARE_MEDIA.WEIXIN == platform) {
+			// wechat
+			_mController.getConfig().removeSsoHandler(SHARE_MEDIA.WEIXIN);
+			UMWXHandler wxHandler = new UMWXHandler(_act, _wxKey, _wxSec);
+			wxHandler.addToSocialSDK();
+			
+			WeiXinShareContent weixinContent = new WeiXinShareContent();
+			weixinContent.setShareContent(text);
+			weixinContent.setTitle(title);
+			weixinContent.setTargetUrl(url);
+			weixinContent.setShareImage(imageObj);
+			_mController.setShareMedia(weixinContent);
+		} else if (SHARE_MEDIA.WEIXIN_CIRCLE == platform) {
+			// 设置朋友圈分享的内容
+			_mController.getConfig().removeSsoHandler(SHARE_MEDIA.WEIXIN_CIRCLE);
+			UMWXHandler wxCircleHandler = new UMWXHandler(_act, _wxKey, _wxSec);
+			wxCircleHandler.setToCircle(true);
+			wxCircleHandler.addToSocialSDK();
+			
+			CircleShareContent circleMedia = new CircleShareContent();
+			circleMedia.setShareContent(text);
+			circleMedia.setTitle(title);
+			circleMedia.setShareImage(imageObj);
+			circleMedia.setTargetUrl(url);
+			_mController.setShareMedia(circleMedia);
+		} else if (SHARE_MEDIA.QQ == platform) {
+			// qq 分享
+			_mController.getConfig().removeSsoHandler(SHARE_MEDIA.QQ);
+			UMQQSsoHandler qqSsoHandler = new UMQQSsoHandler(_act, _qqKey, _qqSec);
+			qqSsoHandler.setTargetUrl(url);
+			qqSsoHandler.addToSocialSDK();
+			
+			QQShareContent qqShareContent = new QQShareContent();
+			qqShareContent.setShareContent(text);
+			qqShareContent.setTitle(title);
+			qqShareContent.setShareImage(imageObj);
+			qqShareContent.setTargetUrl(url);
+			_mController.setShareMedia(qqShareContent);
+		} else if (SHARE_MEDIA.QZONE == platform) {
+			// 设置QQ空间分享内容
+			_mController.getConfig().removeSsoHandler(SHARE_MEDIA.QZONE);
+			QZoneSsoHandler qZoneSsoHandler = new QZoneSsoHandler(_act, _qqKey, _qqSec);
+			qZoneSsoHandler.addToSocialSDK();
+			
+			QZoneShareContent qzone = new QZoneShareContent();
+			qzone.setShareContent(text);
+			qzone.setTargetUrl(url);
+			qzone.setTitle(title);
+			qzone.setShareImage(imageObj);
+			// qzone.setShareMedia(uMusic);
+			_mController.setShareMedia(qzone);
+		} else if (SHARE_MEDIA.SINA == platform) {
+			// sina
+			SinaShareContent sinaContent = new SinaShareContent();
+			sinaContent.setShareContent(text);
+			sinaContent.setShareImage(imageObj);
+			sinaContent.setTitle(title);
+			sinaContent.setTargetUrl(url);
+			_mController.setShareMedia(sinaContent);
+		}
 	}
 }

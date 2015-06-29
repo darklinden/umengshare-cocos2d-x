@@ -39,13 +39,13 @@ public class AppActivity extends Cocos2dxActivity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        JUMShare.sdkInit(this);
+        JUMService.sdkInit(this);
     }
     
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        JUMShare.onActivityResult(requestCode, resultCode, data);
+        JUMService.onActivityResult(requestCode, resultCode, data);
     }
 	
 }
