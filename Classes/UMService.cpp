@@ -12,15 +12,99 @@
 #include <jni.h>
 #include "platform/android/jni/JniHelper.h"
 #include <android/log.h>
+#include "UMConstants.h"
 
 USING_NS_CC;
 
-void UMessageBridge::addTrackUser(int userId)
+//构造&析构
+UMService::UMService()
+{
+    
+}
+
+UMService::~UMService()
+{
+    
+}
+
+//单例对象&初始化
+static UMService* _st = nullptr;
+UMService* UMService::getInstance()
+{
+    if (!_st) {
+        _st = new (std::nothrow) UMService();
+    }
+    
+    return _st;
+}
+
+void UMService::sdkinit()
 {
     JniMethodInfo minfo;
     
     if (JniHelper::getStaticMethodInfo(minfo,
-                                       "org/cocos2dx/cpp/AppActivity",
+                                       "org/cocos2dx/cpp/JUMService",
+                                       "sdkInit",
+                                       "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"))
+    {
+        jobject jumKey = minfo.env->NewStringUTF(UMKEY);
+        jobject jumSec = minfo.env->NewStringUTF(UMSEC);
+        jobject jchannel = minfo.env->NewStringUTF(CHANNLE_ID);
+        
+        std::string logEnable = "0";
+        if (UMLogEnable) {
+            logEnable = "1";
+        }
+        
+        jobject jlogEnable = minfo.env->NewStringUTF(logEnable.c_str());
+        minfo.env->CallStaticVoidMethod(minfo.classID, minfo.methodID, jumKey, jumSec, jchannel, jlogEnable);
+        minfo.env->DeleteLocalRef(jumKey);
+        minfo.env->DeleteLocalRef(jumSec);
+        minfo.env->DeleteLocalRef(jchannel);
+        minfo.env->DeleteLocalRef(jlogEnable);
+    }
+    
+    //设置key
+    {
+        JniMethodInfo minfo;
+        
+        if (JniHelper::getStaticMethodInfo(minfo,
+                                           "org/cocos2dx/cpp/JUMService",
+                                           "setupQQ",
+                                           "(Ljava/lang/String;Ljava/lang/String;)V"))
+        {
+            jobject jqqkey = minfo.env->NewStringUTF(QQKEY);
+            jobject jqqsec = minfo.env->NewStringUTF(QQSEC);
+            minfo.env->CallStaticVoidMethod(minfo.classID, minfo.methodID, jqqkey, jqqsec);
+            minfo.env->DeleteLocalRef(jqqkey);
+            minfo.env->DeleteLocalRef(jqqsec);
+        }
+    }
+    
+    {
+        JniMethodInfo minfo;
+        
+        if (JniHelper::getStaticMethodInfo(minfo,
+                                           "org/cocos2dx/cpp/JUMService",
+                                           "setupWechat",
+                                           "(Ljava/lang/String;Ljava/lang/String;)V"))
+        {
+            jobject jwxkey = minfo.env->NewStringUTF(WXKEY);
+            jobject jwxsec = minfo.env->NewStringUTF(WXSEC);
+            minfo.env->CallStaticVoidMethod(minfo.classID, minfo.methodID, jwxkey, jwxsec);
+            minfo.env->DeleteLocalRef(jwxkey);
+            minfo.env->DeleteLocalRef(jwxsec);
+        }
+    }
+}
+
+/*########################### 推送 ###########################*/
+void UMService::addPushTrackUser(int userId)
+{
+    JniMethodInfo minfo;
+    
+    if (JniHelper::getStaticMethodInfo(minfo,
+                                       "org/cocos2dx/cpp/JUMService",
                                        "addAlias",
                                        "(Ljava/lang/String;)V"))
     {
@@ -30,66 +114,88 @@ void UMessageBridge::addTrackUser(int userId)
     }
 }
 
-static UMShare* _st = nullptr;
-UMShare* UMShare::getInstance()
+/*########################### 社会化分享 ###########################*/
+void UMService::setShareCallback(std::function<void(SHARE_TYPE, int)> callback)
 {
-    if (!_st) {
-        _st = new (std::nothrow) UMShare();
-        if (!_st->init()) {
-            delete _st;
-            _st = nullptr;
+    UMService::getInstance()->_shareCallback = callback;
+}
+
+void UMService::share(SHARE_TYPE t,
+                      const std::string& title,
+                      const std::string& text,
+                      const std::string& url,
+                      const std::string& image)
+{
+    //设置key
+    if (SHARE_TYPE::QQ == t || SHARE_TYPE::QZONE == t) {
+        JniMethodInfo minfo;
+        
+        if (JniHelper::getStaticMethodInfo(minfo,
+                                           "org/cocos2dx/cpp/JUMService",
+                                           "setupQQ",
+                                           "(Ljava/lang/String;Ljava/lang/String;)V"))
+        {
+            jobject jqqkey = minfo.env->NewStringUTF(QQKEY);
+            jobject jqqsec = minfo.env->NewStringUTF(QQSEC);
+            minfo.env->CallStaticVoidMethod(minfo.classID, minfo.methodID, jqqkey, jqqsec);
+            minfo.env->DeleteLocalRef(jqqkey);
+            minfo.env->DeleteLocalRef(jqqsec);
         }
     }
     
-    return _st;
-}
-
-bool UMShare::init()
-{
-    return true;
-}
-
-void UMShare::setShareCallback(std::function<void(SHARE_TYPE, int)> callback)
-{
-    UMShare::getInstance()->_callback = callback;
-}
-
-void UMShare::share(SHARE_TYPE t,
-           const std::string& title,
-           const std::string& text,
-           const std::string& url,
-           const std::string& image)
-{
-
-    JniMethodInfo minfo;
+    if (SHARE_TYPE::WECHAT == t || SHARE_TYPE::WECHAT_CIRCLE == t) {
+        JniMethodInfo minfo;
+        
+        if (JniHelper::getStaticMethodInfo(minfo,
+                                           "org/cocos2dx/cpp/JUMService",
+                                           "setupWechat",
+                                           "(Ljava/lang/String;Ljava/lang/String;)V"))
+        {
+            jobject jwxkey = minfo.env->NewStringUTF(WXKEY);
+            jobject jwxsec = minfo.env->NewStringUTF(WXSEC);
+            minfo.env->CallStaticVoidMethod(minfo.classID, minfo.methodID, jwxkey, jwxsec);
+            minfo.env->DeleteLocalRef(jwxkey);
+            minfo.env->DeleteLocalRef(jwxsec);
+        }
+    }
     
-    if (JniHelper::getStaticMethodInfo(minfo,
-                                       "org/cocos2dx/cpp/JUMShare",
-                                       "share",
-                                       "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"))
+    //分享
     {
-        jobject jtype = minfo.env->NewStringUTF(cocos2d::StringUtils::toString(t).c_str());
-        jobject jtitle = minfo.env->NewStringUTF(title.c_str());
-        jobject jtext = minfo.env->NewStringUTF(text.c_str());
-        jobject jurl = minfo.env->NewStringUTF(url.c_str());
-        jobject jimg = minfo.env->NewStringUTF(image.c_str());
-        minfo.env->CallStaticVoidMethod(minfo.classID, minfo.methodID, jtype, jtitle, jtext, jurl, jimg);
-        minfo.env->DeleteLocalRef(jtype);
-        minfo.env->DeleteLocalRef(jtitle);
-        minfo.env->DeleteLocalRef(jtext);
-        minfo.env->DeleteLocalRef(jurl);
-        minfo.env->DeleteLocalRef(jimg);
+        JniMethodInfo minfo;
+        
+        if (JniHelper::getStaticMethodInfo(minfo,
+                                           "org/cocos2dx/cpp/JUMService",
+                                           "share",
+                                           "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"))
+        {
+            jobject jtype = minfo.env->NewStringUTF(cocos2d::StringUtils::toString(t).c_str());
+            jobject jtitle = minfo.env->NewStringUTF(title.c_str());
+            jobject jtext = minfo.env->NewStringUTF(text.c_str());
+            jobject jurl = minfo.env->NewStringUTF(url.c_str());
+            jobject jimg = minfo.env->NewStringUTF(image.c_str());
+            minfo.env->CallStaticVoidMethod(minfo.classID, minfo.methodID, jtype, jtitle, jtext, jurl, jimg);
+            minfo.env->DeleteLocalRef(jtype);
+            minfo.env->DeleteLocalRef(jtitle);
+            minfo.env->DeleteLocalRef(jtext);
+            minfo.env->DeleteLocalRef(jurl);
+            minfo.env->DeleteLocalRef(jimg);
+        }
     }
 
 }
 
-void UMShare::call(const std::string& platform, const std::string& errCode)
+void UMService::callShareCallback(const std::string &platform, const std::string &errCode)
 {
     cocos2d::log("%s %s", platform.c_str(), errCode.c_str());
     
-    if (_callback) {
-        _callback((SHARE_TYPE)atoi(platform.c_str()), atoi(errCode.c_str()));
+    if (_shareCallback) {
+        _shareCallback((SHARE_TYPE)atoi(platform.c_str()), atoi(errCode.c_str()));
     }
+}
+
+void UMService::passUrl(const std::string &url)
+{
+    
 }
 
 extern "C" {
@@ -110,9 +216,28 @@ extern "C" {
         strcpy(errCode, ec);
         env->ReleaseStringUTFChars(jerrCode, ec);
         
-        UMShare::getInstance()->call(platform, errCode);
+        UMService::getInstance()->callShareCallback(platform, errCode);
     }
 
+}
+
+/*########################### 数据统计 ###########################*/
+
+void UMService::trackEvent(const std::string& event_label)
+{
+    JniMethodInfo minfo;
+    
+    if (JniHelper::getStaticMethodInfo(minfo,
+                                       "org/cocos2dx/cpp/JUMService",
+                                       "trackEvent",
+                                       "(Ljava/lang/String;Ljava/lang/String;)V"))
+    {
+        jobject jevent = minfo.env->NewStringUTF(EVENT_ID);
+        jobject jlabel = minfo.env->NewStringUTF(event_label.c_str());
+        minfo.env->CallStaticVoidMethod(minfo.classID, minfo.methodID, jevent, jlabel);
+        minfo.env->DeleteLocalRef(jevent);
+        minfo.env->DeleteLocalRef(jlabel);
+    }
 }
 
 #endif

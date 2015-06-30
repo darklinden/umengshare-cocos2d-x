@@ -28,7 +28,7 @@ package org.cocos2dx.cpp;
 
 import org.cocos2dx.lib.Cocos2dxActivity;
 
-import com.umeng.socialize.sso.UMSsoHandler;
+import com.umeng.analytics.MobclickAgent;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -48,4 +48,14 @@ public class AppActivity extends Cocos2dxActivity {
         JUMService.onActivityResult(requestCode, resultCode, data);
     }
 	
+    
+    public void onResume() {
+    	JUMService.onResume();
+    	super.onResume();
+	}
+
+	public void onPause() {
+		JUMService.onPause();
+		super.onPause();
+	}
 }

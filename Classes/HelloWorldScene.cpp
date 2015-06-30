@@ -93,7 +93,9 @@ void HelloWorld::menuCloseCallback(Ref* pSender)
 //    exit(0);
 //#endif
     
-    auto path = FileUtils::getInstance()->fullPathForFilename("HelloWorld.png");
+//    auto path = FileUtils::getInstance()->fullPathForFilename("HelloWorld.png");
+//    
+//    UMService::share(UMService::SHARE_TYPE::WECHAT, "Share Title", "Share Text", "http://www.baidu.com", path);// "https://www.baidu.com/img/baidu_jgylogo3.gif");//
     
-    UMService::share(UMService::SHARE_TYPE::WECHAT, "Share Title", "Share Text", "http://www.baidu.com", path);// "https://www.baidu.com/img/baidu_jgylogo3.gif");//
+    UMService::trackEvent("hello world!");
 }
